@@ -1,0 +1,36 @@
+version: '2.3'
+
+services:
+  faceserver:
+    runtime: nvidia
+    build:
+      context: ./
+      dockerfile: Dockerfile-faceserver
+    networks:
+      - nginx_network
+
+  frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile-frontend
+    networks:
+      - nginx_network
+
+  nginx:
+    build:
+      context: ./
+      dockerfile: Dockerfile-nginx
+    ports:
+      - 80:80
+    depends_on:
+      - faceserver
+      - frontend
+    networks:
+      - nginx_network
+
+
+
+networks:
+  nginx_network:
+    driver: bridge
+

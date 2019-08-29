@@ -1,0 +1,31 @@
+FROM nvidia/cuda:10.1-cudnn7-devel
+
+WORKDIR /usr/src/app
+
+ENV PATH /opt/conda/bin:$PATH
+
+RUN apt-get update --fix-missing && apt-get install -y wget bzip2 ca-certificates libglib2.0-0 \
+libxext6 libsm6 libxrender1 git mercurial subversion cmake build-essential supervisor libopenblas-dev liblapack-dev
+
+RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2019.07-Linux-x86_64.sh -O ~/anaconda.sh && \
+    /bin/bash ~/anaconda.sh -b -p /opt/conda && \
+    rm ~/anaconda.sh && \
+    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate base" >> ~/.bashrc
+
+RUN conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
+
+COPY app/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app /usr/src/app/
+COPY data /usr/src/app/data
+
+EXPOSE 8081 8082 8083 8084
+
+HEALTHCHECK --interval=1m --timeout=3s CMD curl -f http://localhost/health || exit 1
+
+COPY config/supervisor/conf.d/supervisord.conf /etc/supervisor/conf.d/
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

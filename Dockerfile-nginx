@@ -1,0 +1,5 @@
+FROM nginx:1.17
+
+RUN rm -rf /etc/nginx/conf.d && mkdir /etc/nginx/conf.d
+
+COPY config/nginx/conf.d/local.conf /etc/nginx/conf.d/
